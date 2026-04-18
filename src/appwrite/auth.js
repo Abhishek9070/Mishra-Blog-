@@ -1,6 +1,12 @@
 import config from "../config/config.js";
 import { Client, Account, ID } from "appwrite";
 
+const toSerializable = (value) => JSON.parse(
+    JSON.stringify(value, (_key, nestedValue) =>
+        typeof nestedValue === "function" ? undefined : nestedValue
+    )
+);
+
 class AuthService {
     client = new Client();
     account;
@@ -13,36 +19,28 @@ class AuthService {
     }
 
     async createAccount({ email, password, name }) {
-        try {
-            const userAccount = await this.account.create({
-                userId: ID.unique(),
-                email,
-                password,
-                name
-            })
-            if (userAccount) {
-                return this.login({ email, password })
-            }
-            else {
-                return userAccount
-            }
-        } catch (error) {
-            throw error
+        const userAccount = await this.account.create({
+            userId: ID.unique(),
+            email,
+            password,
+            name
+        })
+
+        if (userAccount) {
+            return this.login({ email, password })
         }
+
+        return userAccount
     }
 
     async login({ email, password }) {
-        try {
-            return await this.account.createEmailPasswordSession({ email, password })
-        } catch (error) {
-            throw error;
-        }
+        return this.account.createEmailPasswordSession({ email, password })
     }
 
     async getCurrentUser() {
         try {
             const user = await this.account.get()
-            if (user) return user;
+            if (user) return toSerializable(user);
             else return null;
         } catch (error) {
             // 401 for guests is expected when no session exists yet.
@@ -58,7 +56,7 @@ class AuthService {
         try {
             await this.account.deleteSessions();
         } catch (error) {
-            console.log("Appwrite serive :: logout :: error", error);
+            console.log("Appwrite service :: logout :: error", error);
         }
     }
 }

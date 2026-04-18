@@ -9,8 +9,12 @@ function LogOutBtn() {
     .then(() => dispatch(logOut()))
   }
   return (
-    <button onClick={logoutHandler} className='in-line-block px-6 py-2 duration-200
-    hover:bg-blue-700 rounded-full'>LogOut</button>
+    <button
+      onClick={logoutHandler}
+      className='inline-flex items-center rounded-xl border border-rose-100 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:-translate-y-0.5 hover:bg-rose-100'
+    >
+      Log Out
+    </button>
   )
 }
 
