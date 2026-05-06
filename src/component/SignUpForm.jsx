@@ -5,6 +5,7 @@ import { Button, Input, Logo } from './index'
 import { login as authLogin } from '../store/authSlice.js'
 import { useDispatch } from 'react-redux'
 import { useForm } from 'react-hook-form'
+import appwriteService from '../appwrite/db'
 
 function SignUpForm() {
 
@@ -20,6 +21,15 @@ function SignUpForm() {
             if (userSession) {
                 const userData = await authService.getCurrentUser()
                 if (userData) {
+                    await appwriteService.upsertPublicProfile(userData.$id, {
+                        displayName: userData.name,
+                        headline: "",
+                        bio: "",
+                        gender: "Prefer not to say",
+                        location: "",
+                        website: "",
+                        profileImageId: "",
+                    }).catch(() => null)
                     dispatch(authLogin(userData))
                     navigate("/")
                 }

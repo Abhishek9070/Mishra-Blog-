@@ -51,6 +51,18 @@ class AuthService {
         }
     }
 
+    async updateProfile({ name, preferences = null }) {
+        if (name) {
+            await this.account.updateName({ name })
+        }
+
+        if (preferences && typeof preferences === "object") {
+            await this.account.updatePrefs({ prefs: preferences })
+        }
+
+        return this.getCurrentUser()
+    }
+
     async logout() {
 
         try {

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { Route, Routes } from "react-router-dom";
 import authService from "./appwrite/auth";
+import appwriteService from "./appwrite/db";
 import { login, logOut } from "./store/authSlice";
 import { AuthLayout, Footer, Header } from "./component";
 import AddPost from "./pages/AddPost";
@@ -10,7 +11,9 @@ import EditPost from "./pages/EditPost";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Post from "./pages/Post";
+import Profile from "./pages/Profile";
 import SignUp from "./pages/signUp";
+import UserProfile from "./pages/UserProfile";
 
 
 function App() {
@@ -22,6 +25,19 @@ function App() {
       .then((userData) => {
         if (userData) {
           dispatch(login(userData));
+
+          const prefs = userData?.prefs || {};
+          appwriteService
+            .upsertPublicProfile(userData.$id, {
+              displayName: userData?.name || "",
+              headline: prefs?.headline || "",
+              bio: prefs?.bio || "",
+              gender: prefs?.gender || "Prefer not to say",
+              location: prefs?.location || "",
+              website: prefs?.website || "",
+              profileImageId: prefs?.profileImageId || "",
+            })
+            .catch(() => null);
         } else {
           dispatch(logOut());
         }
@@ -81,6 +97,15 @@ function App() {
               </AuthLayout>
             }
           />
+          <Route
+            path="/profile"
+            element={
+              <AuthLayout authentication>
+                <Profile />
+              </AuthLayout>
+            }
+          />
+          <Route path="/profile/:userId" element={<UserProfile />} />
           <Route
             path="/edit-post/:slug"
             element={

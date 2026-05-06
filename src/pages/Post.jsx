@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import appwriteService from "../appwrite/db";
-import { Button, Container } from "../component";
+import { Button, Container, ProfileAvatar } from "../component";
 import parse from "html-react-parser";
 import { useSelector } from "react-redux";
 
 export default function Post() {
     const [post, setPost] = useState(null);
+    const [authorProfile, setAuthorProfile] = useState(null);
     const [imageFailed, setImageFailed] = useState(false);
     const { slug } = useParams();
     const navigate = useNavigate();
@@ -18,7 +19,12 @@ export default function Post() {
     useEffect(() => {
         if (slug) {
             appwriteService.getPost(slug).then((post) => {
-                if (post) setPost(post);
+                if (post) {
+                    setPost(post);
+                    appwriteService.getPublicProfile(post.userId).then((profile) => {
+                        setAuthorProfile(profile);
+                    });
+                }
                 else navigate("/");
             });
         } else navigate("/");
@@ -34,6 +40,7 @@ export default function Post() {
     };
 
     const imageUrl = appwriteService.getFilePreview(post?.featuredImage);
+    const authorName = authorProfile?.displayName || (post?.userId ? `User ${post.userId.slice(0, 8)}` : "Unknown author");
 
     return post ? (
         <div className="py-8">
@@ -44,7 +51,7 @@ export default function Post() {
                         <img
                             src={imageUrl}
                             alt={post.title}
-                            className="max-h-[520px] w-full rounded-xl object-cover"
+                            className="max-h-520px w-full rounded-xl object-cover"
                             onError={() => setImageFailed(true)}
                         />
                     ) : (
@@ -68,6 +75,21 @@ export default function Post() {
                 </div>
                 <div className="mb-6 w-full">
                     <h1 className="text-3xl font-bold text-slate-900">{post.title}</h1>
+                    <div className="mt-3 flex flex-wrap items-center gap-3">
+                        <ProfileAvatar
+                            imageId={authorProfile?.profileImageId}
+                            name={authorName}
+                            sizeClass="h-10 w-10"
+                            alt={authorName}
+                        />
+                        {post.userId ? (
+                            <Link to={`/profile/${post.userId}`} className="text-sm font-semibold text-sky-700 transition hover:underline">
+                                Posted by {authorName}
+                            </Link>
+                        ) : (
+                            <span className="text-sm font-semibold text-slate-500">Posted by {authorName}</span>
+                        )}
+                    </div>
                 </div>
                 <div className="content-prose">
                     {parse(post.content)}

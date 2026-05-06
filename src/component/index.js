@@ -12,6 +12,10 @@ import RTE from './RTE.jsx'
 import PostCard from './PostCard.jsx'
 import PostForm from './Postform/PostForm.jsx'
 import AuthLayout from './AuthLayoute.jsx'
+import ProfileAvatar from './profile/ProfileAvatar.jsx'
+import ProfileSummaryCard from './profile/ProfileSummaryCard.jsx'
+import ProfileEditForm from './profile/ProfileEditForm.jsx'
+import ProfilePostsSection from './profile/ProfilePostsSection.jsx'
 export { 
     Header,
     Footer,
@@ -26,5 +30,9 @@ export {
     RTE,
     PostCard,
     PostForm,
-    AuthLayout
+    AuthLayout,
+    ProfileAvatar,
+    ProfileSummaryCard,
+    ProfileEditForm,
+    ProfilePostsSection
 }

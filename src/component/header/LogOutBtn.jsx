@@ -1,12 +1,18 @@
 import React from 'react'
 import { useDispatch } from 'react-redux'
+import { useNavigate } from 'react-router-dom'
 import authService from '../../appwrite/auth'
 import { logOut } from '../../store/authSlice'
 function LogOutBtn() {
   const dispatch = useDispatch()
-  const logoutHandler = ()=>{
-    authService.logout()
-    .then(() => dispatch(logOut()))
+  const navigate = useNavigate()
+
+  const logoutHandler = async ()=>{
+    // Update client auth state first so protected UI switches immediately.
+    dispatch(logOut())
+    navigate('/login', { replace: true })
+
+    await authService.logout()
   }
   return (
     <button

@@ -1,10 +1,11 @@
 import config from "../config/config.js";
-import { Client, ID, TablesDB, Storage, Query } from "appwrite";
+import { Client, ID, TablesDB, Storage, Query, Permission, Role } from "appwrite";
 
 class Service {
     client = new Client();
     database;
     storage;
+    profileCache = new Map();
 
     constructor() {
         this.client
@@ -96,15 +97,121 @@ class Service {
         };
     }
 
+    async getPostsByUser(userId, includeInactive = true) {
+        const queries = [Query.equal("userId", userId)];
+
+        if (!includeInactive) {
+            queries.push(Query.equal("status", "active"));
+        }
+
+        return this.getPosts(queries);
+    }
+
+    normalizePublicProfile(userId, profileData = {}) {
+        return {
+            userId,
+            displayName: profileData?.displayName || "",
+            headline: profileData?.headline || "",
+            bio: profileData?.bio || "",
+            gender: profileData?.gender || "Prefer not to say",
+            location: profileData?.location || "",
+            website: profileData?.website || "",
+            profileImageId: this.resolveFileId(profileData?.profileImageId),
+            updatedAt: profileData?.updatedAt || new Date().toISOString(),
+        };
+    }
+
+    getPublicProfileFileView(userId) {
+        if (!userId) return "";
+
+        return this.storage.getFileView(config.appWriteBucketId, userId);
+    }
+
+    async upsertPublicProfile(userId, profileData = {}) {
+        if (!userId) {
+            throw new Error("User ID is required to update profile.");
+        }
+
+        const normalizedProfile = this.normalizePublicProfile(userId, profileData);
+        const payload = JSON.stringify(normalizedProfile);
+        const profileFile = new File([payload], `profile-${userId}.json`, {
+            type: "application/json",
+        });
+
+        try {
+            await this.storage.deleteFile({
+                bucketId: config.appWriteBucketId,
+                fileId: userId,
+            });
+        } catch (error) {
+            if (error?.code !== 404 && error?.status !== 404) {
+                console.log("Appwrite service :: upsertPublicProfile :: delete error", error);
+            }
+        }
+
+        const result = await this.storage.createFile({
+            bucketId: config.appWriteBucketId,
+            fileId: userId,
+            file: profileFile,
+            permissions: [
+                Permission.read(Role.any()),
+                Permission.update(Role.user(userId)),
+                Permission.delete(Role.user(userId)),
+            ],
+        });
+
+        this.profileCache.set(userId, normalizedProfile);
+        return result;
+    }
+
+    async getPublicProfile(userId, forceRefresh = false) {
+        if (!userId) {
+            return null;
+        }
+
+        if (!forceRefresh && this.profileCache.has(userId)) {
+            return this.profileCache.get(userId);
+        }
+
+        try {
+            const response = await fetch(this.getPublicProfileFileView(userId));
+
+            if (!response.ok) {
+                return null;
+            }
+
+            const profile = await response.json();
+            const normalizedProfile = this.normalizePublicProfile(userId, profile);
+            this.profileCache.set(userId, normalizedProfile);
+            return normalizedProfile;
+        } catch (error) {
+            if (error?.code !== 404 && error?.status !== 404) {
+                console.log("Appwrite service :: getPublicProfile :: error", error);
+            }
+
+            return null;
+        }
+    }
+
     // =========================
     // 🔹 FILE UPLOAD (STORAGE)
     // =========================
 
-    async uploadFile(file) {
+    async uploadFile(file, userId = "") {
+        const permissions = [Permission.read(Role.any())];
+
+        if (userId) {
+            permissions.push(
+                Permission.update(Role.user(userId)),
+                Permission.delete(Role.user(userId))
+            );
+        }
+
         return this.storage.createFile({
             bucketId: config.appWriteBucketId,
             fileId: ID.unique(),
-            file: file
+            file: file,
+            permissions,
         });
     }
 

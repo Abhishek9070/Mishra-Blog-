@@ -46,23 +46,23 @@ function AllPosts() {
         );
     }
 
-  return (
-    <div className="w-full py-8">
-        <Container>
-            <div className="mb-6">
-                <h1 className="text-3xl font-bold text-slate-900">All Posts</h1>
-                <p className="mt-1 text-slate-600">Browse and manage published content.</p>
-            </div>
-            <div className="flex flex-wrap gap-y-2">
-                {posts.map((post) => (
-                    <div key={post.$id} className="p-2 w-full sm:w-1/2 lg:w-1/3">
-                        <PostCard {...post} />
-                    </div>
-                ))}
-            </div>
+    return (
+        <div className="w-full py-8">
+            <Container>
+                <div className="mb-6">
+                    <h1 className="text-3xl font-bold text-slate-900">All Posts</h1>
+                    <p className="mt-1 text-slate-600">Browse and manage published content.</p>
+                </div>
+                <div className="flex flex-wrap gap-y-2">
+                    {posts.map((post) => (
+                        <div key={post.$id} className="p-2 w-full sm:w-1/2 lg:w-1/3">
+                            <PostCard {...post} />
+                        </div>
+                    ))}
+                </div>
             </Container>
-    </div>
-  );
+        </div>
+    );
 }
 
 export default AllPosts;
