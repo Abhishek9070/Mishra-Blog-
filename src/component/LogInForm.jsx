@@ -5,6 +5,7 @@ import { Button, Input, Logo } from "./index"
 import { useDispatch } from "react-redux"
 import authService from "../appwrite/auth"
 import { useForm } from "react-hook-form"
+import appwriteService from "../appwrite/db"
 
 function LoginForm() {
   const navigate = useNavigate()
@@ -18,7 +19,23 @@ function LoginForm() {
       const session = await authService.login(data)
       if (session) {
         const userData = await authService.getCurrentUser()
-        if (userData) dispatch(authLogin(userData));
+        if (userData) {
+          const prefs = userData?.prefs || {}
+
+          await appwriteService.getPublicProfile(userData.$id)
+            .then((publicProfile) => appwriteService.upsertPublicProfile(userData.$id, {
+              displayName: publicProfile?.displayName || userData?.name || "",
+              headline: publicProfile?.headline || prefs?.headline || "",
+              bio: publicProfile?.bio || prefs?.bio || "",
+              gender: publicProfile?.gender || prefs?.gender || "Prefer not to say",
+              location: publicProfile?.location || prefs?.location || "",
+              website: publicProfile?.website || prefs?.website || "",
+              profileImageId: publicProfile?.profileImageId || prefs?.profileImageId || "",
+            }))
+            .catch(() => null)
+
+          dispatch(authLogin(userData))
+        }
         navigate("/")
       }
     } catch (error) {

@@ -26,6 +26,7 @@ function SignUpForm() {
                         headline: "",
                         bio: "",
                         gender: "Prefer not to say",
+                        dob: data.dob || "",
                         location: "",
                         website: "",
                         profileImageId: "",
@@ -79,6 +80,11 @@ function SignUpForm() {
                                         "Email address must be a valid address",
                                 }
                             })}
+                        />
+                        <Input
+                            label="Date of Birth: "
+                            type="date"
+                            {...register("dob")}
                         />
                         <Input
                             label="Password: "

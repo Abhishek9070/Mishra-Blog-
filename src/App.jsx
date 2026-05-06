@@ -28,15 +28,16 @@ function App() {
 
           const prefs = userData?.prefs || {};
           appwriteService
-            .upsertPublicProfile(userData.$id, {
-              displayName: userData?.name || "",
-              headline: prefs?.headline || "",
-              bio: prefs?.bio || "",
-              gender: prefs?.gender || "Prefer not to say",
-              location: prefs?.location || "",
-              website: prefs?.website || "",
-              profileImageId: prefs?.profileImageId || "",
-            })
+            .getPublicProfile(userData.$id)
+            .then((publicProfile) => appwriteService.upsertPublicProfile(userData.$id, {
+              displayName: publicProfile?.displayName || userData?.name || "",
+              headline: publicProfile?.headline || prefs?.headline || "",
+              bio: publicProfile?.bio || prefs?.bio || "",
+              gender: publicProfile?.gender || prefs?.gender || "Prefer not to say",
+              location: publicProfile?.location || prefs?.location || "",
+              website: publicProfile?.website || prefs?.website || "",
+              profileImageId: publicProfile?.profileImageId || prefs?.profileImageId || "",
+            }))
             .catch(() => null);
         } else {
           dispatch(logOut());
